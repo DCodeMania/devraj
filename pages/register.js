@@ -1,16 +1,17 @@
 import axios from "axios";
 import Head from "next/head";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState, useEffect, useContext } from "react";
 import Loader from "../components/Loader";
 import { LoginContext } from "../helper/context";
-import Link from "next/link";
-const index = () => {
+const register = () => {
 	const router = useRouter();
 
-	const [message, setMessage] = useState("");
+	const [nameError, setNameError] = useState("");
 	const [emailError, setEmailError] = useState("");
 	const [passwordError, setPasswordError] = useState("");
+	const [confirmPassError, setConfirmPassError] = useState("");
 
 	const { loggedIn, setLoggedIn } = useContext(LoginContext);
 
@@ -22,22 +23,26 @@ const index = () => {
 		}
 	}, []);
 
-	const handleLogin = async (e) => {
+	const handleRegister = async (e) => {
 		e.preventDefault();
 		const formData = new FormData();
+		formData.append("name", e.target.name.value);
 		formData.append("email", e.target.email.value);
 		formData.append("password", e.target.password.value);
+		formData.append("password_confirmation", e.target.confirmPass.value);
 
 		const res = await axios.post(
-			`${process.env.base_url}/api/auth/login`,
+			`${process.env.base_url}/api/auth/register`,
 			formData
 		);
 		const result = res.data;
-		if (result.credError) {
-			setMessage(result.message);
-			setEmailError("");
-			setPasswordError("");
-		} else if (result.validationError) {
+		if (result.validationError) {
+			if (result.message.name) {
+				setNameError(result.message.name);
+			} else {
+				setNameError("");
+			}
+
 			if (result.message.email) {
 				setEmailError(result.message.email);
 			} else {
@@ -48,6 +53,12 @@ const index = () => {
 				setPasswordError(result.message.password);
 			} else {
 				setPasswordError("");
+			}
+
+			if (result.message.password) {
+				setConfirmPassError(result.message.password);
+			} else {
+				setConfirmPassError("");
 			}
 		} else {
 			localStorage.setItem("token", result.data.token);
@@ -63,23 +74,29 @@ const index = () => {
 	return (
 		<>
 			<Head>
-				<title>Full Stack App Laravel 9 and Next.js</title>
+				<title>Register</title>
 			</Head>
 			<div className="row min-vh-100 justify-content-center align-items-center">
 				<div className="col-lg-5">
 					<div className="card shadow">
 						<div className="card-header">
-							<h1 className="text-secondary fw-bold">Login</h1>
+							<h1 className="text-secondary fw-bold">Register</h1>
 						</div>
 						<div className="card-body p-5">
-							{message != "" ? (
-								<div className={`alert alert-danger fade show`} role="alert">
-									<strong>{message}</strong>
+							<form onSubmit={handleRegister} noValidate>
+								<div className="mb-3">
+									<label htmlFor="name">Name</label>
+									<input
+										type="text"
+										name="name"
+										id="name"
+										className={`form-control ${
+											nameError != "" ? "is-invalid" : ""
+										}`}
+									/>
+									<div className="invalid-feedback">{nameError}</div>
 								</div>
-							) : (
-								""
-							)}
-							<form onSubmit={handleLogin} noValidate>
+
 								<div className="mb-3">
 									<label htmlFor="email">E-mail</label>
 									<input
@@ -106,16 +123,29 @@ const index = () => {
 									<div className="invalid-feedback">{passwordError}</div>
 								</div>
 
+								<div className="mb-3">
+									<label htmlFor="confirmPass">Password</label>
+									<input
+										type="password"
+										name="confirmPass"
+										id="confirmPass"
+										className={`form-control ${
+											confirmPassError != "" ? "is-invalid" : ""
+										}`}
+									/>
+									<div className="invalid-feedback">{confirmPassError}</div>
+								</div>
+
 								<div className="d-grid mb-3">
 									<button type="submit" className="btn btn-primary">
-										Login
+										Register
 									</button>
 								</div>
 
 								<div className="text-center">
-									New user?{" "}
-									<Link href="/register">
-										<a className="text-decoration-none">Register</a>
+									Already registered?{" "}
+									<Link href="/">
+										<a className="text-decoration-none">Login</a>
 									</Link>
 								</div>
 							</form>
@@ -127,4 +157,4 @@ const index = () => {
 	);
 };
 
-export default index;
+export default register;
