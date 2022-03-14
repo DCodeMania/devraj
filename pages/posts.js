@@ -81,7 +81,7 @@ const posts = ({ posts }) => {
 	);
 };
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
 	const res = await axios.get(`${process.env.base_url}/api/posts`);
 	return {
 		props: {
